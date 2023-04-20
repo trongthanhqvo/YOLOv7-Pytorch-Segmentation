@@ -1,0 +1,7 @@
+train: "/home/mrc/thanhnt/YOLOv7-Pytorch-Segmentation/data/data_test/train/"
+val: "/home/mrc/thanhnt/YOLOv7-Pytorch-Segmentation/data/data_test/val/"
+# number of classes
+nc: 2
+
+# class names
+names: ['mavic', 'phantom']
