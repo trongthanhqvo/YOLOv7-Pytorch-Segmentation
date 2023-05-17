@@ -48,7 +48,6 @@ from utils.segment.general import process_mask, scale_masks
 from utils.segment.plots import plot_masks
 from utils.torch_utils import select_device, smart_inference_mode
 
-
 @smart_inference_mode()
 def run(
         weights=ROOT / 'yolov5s-seg.pt',  # model.pt path(s)
@@ -256,7 +255,7 @@ def parse_opt():
 
 
 def main(opt):
-    check_requirements(exclude=('tensorboard', 'thop'))
+    #check_requirements(exclude=('tensorboard', 'thop'))
     run(**vars(opt))
 
 
