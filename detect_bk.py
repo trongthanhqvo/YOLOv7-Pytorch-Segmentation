@@ -45,10 +45,6 @@ from utils.general import (LOGGER, Profile, check_file, check_img_size, check_im
                            increment_path, non_max_suppression, print_args, scale_coords, strip_optimizer, xyxy2xywh)
 from utils.plots import Annotator, colors, save_one_box
 from utils.torch_utils import select_device, smart_inference_mode
-import requests
-import json
-from plot2mat import convert2mat
-import numpy as np
 
 
 @smart_inference_mode()
@@ -112,92 +108,7 @@ def run(
     # Run inference
     model.warmup(imgsz=(1 if pt else bs, 3, *imgsz))  # warmup
     seen, windows, dt = 0, [], (Profile(), Profile(), Profile())
-    path = "/home/k/thanhnt/YOLOv7-Pytorch-Segmentation/JPEGImages/mavic_0.png"
-    data_buffer = []
-    # while True:
-    while True:
-        res = requests.get("http://192.168.0.102:54664/stream", stream=True)
-        if res.encoding is None:
-            res.encoding = 'utf-8'
-        for line in res.iter_lines(decode_unicode=True):
-            if line:
-                data = json.loads(line)
-                for arr in data["samples"]:
-                    data_buffer.append(arr)
-                    if len(data_buffer) == 200:
-                        image = convert2mat(data_buffer)
-                        image_s0 = image.transpose((2, 0, 1))[::-1]  # HWC to CHW, BGR to RGB
-                        image_s0 = np.ascontiguousarray(image_s0)
-                        data_buffer.clear()
-                        with dt[0]:
-                            image_s0 = torch.from_numpy(image_s0).to(device)
-                            image_s0 = image_s0.half() if model.fp16 else image_s0.float()  # uint8 to fp16/32
-                            image_s0 /= 255  # 0 - 255 to 0.0 - 1.0
-                            if len(image_s0.shape) == 3:
-                                image_s0 = image_s0[None]  # expand for batch dim
-
-                        # Inference
-                        with dt[1]:
-                            visualize = increment_path(save_dir / Path(path).stem, mkdir=True) if visualize else False
-                            pred = model(image_s0, augment=augment, visualize=visualize)
-
-                        # NMS
-                        with dt[2]:
-                            pred = non_max_suppression(pred, conf_thres, iou_thres, classes, agnostic_nms, max_det=max_det)
-                        
-                        # Process predictions
-                        s = "image 1/1 /home/k/thanhnt/YOLOv7-Pytorch-Segmentation/JPEGImages/mavic_0.png:"
-                        for i, det in enumerate(pred):  # per image
-                            seen += 1
-                            if webcam:  # batch_size >= 1
-                                p, im0, frame = path[i], image[i].copy(), dataset.count
-                                s += f'{i}: '
-                            else:
-                                p, im0, frame = path, image.copy(), getattr(dataset, 'frame', 0)
-
-                            p = Path(p)  # to Path
-                            save_path = str(save_dir / p.name)  # im.jpg
-                            txt_path = str(save_dir / 'labels' / p.stem) + ('' if dataset.mode == 'image' else f'_{frame}')  # im.txt
-                            s += '%gx%g ' % image_s0.shape[2:]  # print string
-                            gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]  # normalization gain whwh
-                            imc = im0.copy() if save_crop else im0  # for save_crop
-                            annotator = Annotator(im0, line_width=line_thickness, example=str(names))
-                            if len(det):
-                                # Rescale boxes from img_size to im0 size
-                                det[:, :4] = scale_coords(image_s0.shape[2:], det[:, :4], im0.shape).round()
-
-                                # Print results
-                                for c in det[:, 5].unique():
-                                    n = (det[:, 5] == c).sum()  # detections per class
-                                    s += f"{n} {names[int(c)]}{'s' * (n > 1)}, "  # add to string
-
-                                # Write results
-                                for *xyxy, conf, cls in reversed(det):
-                                    if save_txt:  # Write to file
-                                        xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
-                                        line = (cls, *xywh, conf) if save_conf else (cls, *xywh)  # label format
-                                        with open(f'{txt_path}.txt', 'a') as f:
-                                            f.write(('%g ' * len(line)).rstrip() % line + '\n')
-
-                                    if save_img or save_crop or view_img:  # Add bbox to image
-                                        c = int(cls)  # integer class
-                                        label = None if hide_labels else (names[c] if hide_conf else f'{names[c]} {conf:.2f}')
-                                        annotator.box_label(xyxy, label, color=colors(c, True))
-                                    if save_crop:
-                                        save_one_box(xyxy, imc, file=save_dir / 'crops' / names[c] / f'{p.stem}.jpg', BGR=True)
-                            # Save results (image with detections)
-                            if save_img:
-                                if dataset.mode == 'image':
-                                    cv2.imwrite(save_path, im0)
-                        print(f"{s}{'' if len(det) else '(no detections), '}{dt[1].dt * 1E3:.1f}ms")
-            #             break
-            # if len(data_buffer) == 200:
-            #     break
-        # break
-    # except:
-    #     print("Resquest Fail!")
-
-    # for path, im, im0s, vid_cap, s in dataset:
+    for path, im, im0s, vid_cap, s in dataset:
         with dt[0]:
             im = torch.from_numpy(im).to(device)
             im = im.half() if model.fp16 else im.float()  # uint8 to fp16/32
@@ -286,8 +197,8 @@ def run(
                         vid_writer[i] = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (w, h))
                     vid_writer[i].write(im0)
 
-    #     # Print time (inference-only)
-    #     LOGGER.info(f"{s}{'' if len(det) else '(no detections), '}{dt[1].dt * 1E3:.1f}ms")
+        # Print time (inference-only)
+        LOGGER.info(f"{s}{'' if len(det) else '(no detections), '}{dt[1].dt * 1E3:.1f}ms")
 
     # Print results
     t = tuple(x.t / seen * 1E3 for x in dt)  # speeds per image
@@ -334,7 +245,7 @@ def parse_opt():
 
 
 def main(opt):
-    #check_requirements(exclude=('tensorboard', 'thop'))
+    check_requirements(exclude=('tensorboard', 'thop'))
     run(**vars(opt))
 
 

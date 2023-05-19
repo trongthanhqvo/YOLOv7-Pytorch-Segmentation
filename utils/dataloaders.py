@@ -84,7 +84,6 @@ def getdata():
     # print(len(data[0]))
 
     # data /= data.max()/255.0
-    print("data= ",data.shape)
 
     fig = plt.figure()
     ax = fig.add_axes((0, 0, 1, 1))
@@ -318,6 +317,7 @@ class LoadImages:
             # x=0
             # h=188
             # w=640
+            
             # y=213
             # x=0
             # h=55
