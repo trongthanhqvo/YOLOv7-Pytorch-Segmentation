@@ -313,10 +313,10 @@ class LoadImages:
             # im0 = cv2.imread(path)  # BGR
             im0 = getdata()
             # print("img0:", im0)
-            # y=146
-            # x=0
-            # h=188
-            # w=640
+            y=146
+            x=0
+            h=188
+            w=640
             
             # y=213
             # x=0

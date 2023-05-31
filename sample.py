@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 path_save = "/home/k/thanhnt/YOLOv7-Pytorch-Segmentation/images/"
 number = 0
-r = requests.get("http://192.168.0.102:54664/stream", stream=True)
+r = requests.get("http://192.168.0.116:54664/stream", stream=True)
 def plot_data(data):
     fig = plt.figure(figsize=(5,5))
     ax = fig.add_axes((0, 0, 1, 1))

@@ -20,8 +20,8 @@ def fig2data ( fig ):
  
     # Get the RGBA buffer from the figure
     w,h = fig.canvas.get_width_height()
-    buf = numpy.fromstring( fig.canvas.tostring_argb(), dtype=numpy.uint8 )
-    buf.shape = ( w, h, 4)
+    buf = numpy.frombuffer( fig.canvas.tostring_rgb(), dtype=numpy.uint8 )
+    buf.shape = ( w, h, 3)
  
     # canvas.tostring_argb give pixmap in ARGB mode. Roll the ALPHA channel to have it in RGBA mode
     buf = numpy.roll ( buf, 3, axis = 2 )
@@ -35,12 +35,13 @@ def fig2img ( fig ):
     """
     # put the figure pixmap into a numpy array
     buf = fig2data ( fig )
+    # print(buf)
     w, h, d = buf.shape
     # print("w:", w)
     # print("h:", h)
     # print("d:", d)
 
-    return PIL.Image.frombytes( "RGBA", ( w ,h ), buf.tostring( ) )
+    return PIL.Image.frombytes( "RGB", ( w ,h ), buf.tobytes() )
 
 def getdata():
 #get data
@@ -48,7 +49,7 @@ def getdata():
     # print(len(data[0]))
 
     # data /= data.max()/255.0
-    print("data= ",data.shape)
+    # print("data= ",data.shape)
 
     fig = plt.figure()
     ax = fig.add_axes((0, 0, 1, 1))
@@ -58,7 +59,15 @@ def getdata():
 
     im = fig2img (fig) 
     opencvImage = cv2.cvtColor(numpy.array(im), cv2.COLOR_RGB2BGR)
-    # return opencvImage
-    im.show()
+
+    y=202
+    x=0
+    h=75
+    w=640
+    opencvImage = opencvImage[y:y+h, x:x+w]
+
+    # cv2.imwrite("test.png", opencvImage)
+    return opencvImage
+    # im.show()
 
 getdata()

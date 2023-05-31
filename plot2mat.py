@@ -55,11 +55,14 @@ def convert2mat(data):
     ax.imshow(data)
 
     im = fig2img (fig)
+    # print("im:", im.shape)
     opencvImage = cv2.cvtColor(numpy.array(im), cv2.COLOR_RGB2BGR)
-    # y=202
-    # x=0
-    # h=75
-    # w=640
-    # opencvImage = opencvImage[y:y+h, x:x+w]
-    # print(opencvImage.shape)
+    # print("opencvImage:", opencvImage.shape)
+    y=202
+    x=0
+    h=96
+    w=640
+    opencvImage = opencvImage[y:y+h, x:x+w]
+    print(opencvImage.shape)
+    plt.close()
     return opencvImage
